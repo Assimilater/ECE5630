@@ -187,7 +187,7 @@ int main() {
 		if (sum > 255) { sum = 255; }
 		return (byte)sum;
 	});
-	err = SavePGM("Test.pgm", P3);
+	err = SavePGM("P3.pgm", P3);
 	if (err != ERROR_NONE) {
 		std::cout << "Unable to save P3.pgm! Error Code: " << err << std::endl;
 		exit(EXIT_FAILURE);
