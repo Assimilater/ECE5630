@@ -22,6 +22,7 @@ float S2[] = {
 	 1,  2,  1,
 };
 
+// Naive Approach
 template<typename T1, typename T2>
 Image<float>* Convolve2D(Image<T1>* image, Image<T2>* filter) {
 	int M = image->M() + filter->M() - 1;
@@ -35,6 +36,7 @@ Image<float>* Convolve2D(Image<T1>* image, Image<T2>* filter) {
 	});
 }
 
+// Optimization 1 - Remove std::function from 4-layer loops
 template<typename T1, typename T2>
 Image<float>* O1Convolve2D(Image<T1>* image, Image<T2>* filter) {
 	int MI = image->M();
@@ -61,6 +63,7 @@ Image<float>* O1Convolve2D(Image<T1>* image, Image<T2>* filter) {
 	return output;
 }
 
+// Struct helper for Multithreading in Optimization 2
 template<typename T1, typename T2>
 class Plan {
 public:
@@ -87,6 +90,7 @@ public:
 	}
 };
 
+// Thread routine for Multithreading in Opimization 2 (compare loop with O1Convolve2D)
 template<typename T1, typename T2>
 void FastConvolve2DThread(Plan<T1, T2>* plan, int n0, int n1) {
 	if (n1 > plan->N) { n1 = plan->N; }
@@ -103,8 +107,10 @@ void FastConvolve2DThread(Plan<T1, T2>* plan, int n0, int n1) {
 	}
 }
 
+// The number of threads to use in optimization 2 (divided roughly equally, the last one may be slightly less workload)
 #define POOL_SIZE 10
 
+// Optimization 2 - Multithreaded computation
 template<typename T1, typename T2>
 Image<float>* FastConvolve2D(Image<T1>* image, Image<T2>* filter) {
 	Plan<T1, T2> plan(image, filter);
@@ -149,12 +155,12 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
+	// Testing to verify that we save the same images we read
 	//err = SavePGM("test_image.pgm", image);
 	//if (err != ERROR_NONE) {
 	//	std::cout << "Unable to save test_image.pgm! Error Code: " << err << std::endl;
 	//	exit(EXIT_FAILURE);
 	//}
-
 	//err = SavePGM("test_filter.pgm", filter);
 	//if (err != ERROR_NONE) {
 	//	std::cout << "Unable to save test_filter.pgm! Error Code: " << err << std::endl;
@@ -163,8 +169,8 @@ int main() {
 
 	// Problem 2
 	Image<float>* H1F = FastConvolve2D(image, H1Filter);
-	Image<byte>* P2 = new Image<byte>(H1F->M(), H1F->N(), [H1F](int m, int n) -> byte {
-		float h1 = H1F->Get(m, n);
+	Image<byte>* P2 = new Image<byte>(image->M(), image->N(), [H1F, H1Filter](int m, int n) -> byte {
+		float h1 = H1F->Get(m + H1Filter->ConvTailM(), n + H1Filter->ConvTailN());
 		if (h1 > 255) { h1 = 255; }
 		if (h1 < 0) { h1 = 0; }
 		return (byte)h1;
@@ -178,9 +184,9 @@ int main() {
 	// Problem 3
 	Image<float>* G1 = FastConvolve2D(image, S1Filter);
 	Image<float>* G2 = FastConvolve2D(image, S2Filter);
-	Image<byte>* P3 = new Image<byte>(G1->M(), G1->N(), [G1, G2](int m, int n) -> byte {
-		float g1 = G1->Get(m, n);
-		float g2 = G2->Get(m, n);
+	Image<byte>* P3 = new Image<byte>(image->M(), image->N(), [G1, G2, S1Filter, S2Filter](int m, int n) -> byte {
+		float g1 = G1->Get(m + S1Filter->ConvTailM(), n + S1Filter->ConvTailN());
+		float g2 = G2->Get(m + S2Filter->ConvTailM(), n + S2Filter->ConvTailN());
 		g1 = g1 < 0 ? g1 * -1 : g1;
 		g2 = g2 < 0 ? g2 * -1 : g2;
 		float sum = g1 + g2;
@@ -197,31 +203,32 @@ int main() {
 
 	// Before you filter, subtract a scalar value from each value in the filter
 	// The scalar is the minimim value in the filter
-	byte minScalar = 255;
-	filter->each([&minScalar](int m, int n, byte v) -> void {
-		if (v < minScalar) { minScalar = v; }
-	});
-	filter->each([minScalar](int m, int n, byte v) -> byte {
-		return v - minScalar;
-	});
+	// It so happens this value is ... 0?
+	//byte minScalar = 255;
+	//filter->each([&minScalar](int m, int n, byte v) -> void {
+	//	if (v < minScalar) { minScalar = v; }
+	//});
+	//filter->each([minScalar](int m, int n, byte v) -> byte {
+	//	return v - minScalar;
+	//});
 
 	Image<float>* F1 = FastConvolve2D(image, filter);
 
 	// Scale the filtered image so the maximum value in the image is 255
 	// and all negative values after scaling are set to zero (done in ctor() of P4)
-	float minF1, maxF1;
-	minF1 = maxF1 = F1->Get(0, 0);
-	F1->each([&minF1, &maxF1](int m, int n, float v) -> void {
-		if (v < minF1) { minF1 = v; }
+	//float minF1;
+	float maxF1 = F1->Get(0, 0);
+	F1->each([&maxF1](int m, int n, float v) -> void {
+		//if (v < minF1) { minF1 = v; }
 		if (v > maxF1) { maxF1 = v; }
 	});
-	F1->each([minF1, maxF1](int m, int n, float v) -> float {
+	F1->each([maxF1](int m, int n, float v) -> float {
 		float scaled = v * 255 / maxF1;
 		return scaled;
 	});
 
-	Image<byte>* P4 = new Image<byte>(F1->M(), F1->N(), [F1](int m, int n) -> byte {
-		float f1 = F1->Get(m, n);
+	Image<byte>* P4 = new Image<byte>(image->M(), image->N(), [F1, filter](int m, int n) -> byte {
+		float f1 = F1->Get(m + filter->ConvTailM(), n + filter->ConvTailN());
 		if (f1 > 255) { f1 = 255; }
 		if (f1 < 0) { f1 = 0; }
 		return (byte)f1;

@@ -102,6 +102,9 @@ public:
 	inline const int M() const { return width; }
 	inline const int N() const { return height; }
 
+	inline const int ConvTailM() const { return width / 2; }
+	inline const int ConvTailN() const { return height / 2; }
+
 	inline T Get(int m, int n) const {
 		if (m < 0 || n < 0 || m >= width || n >= height || image == nullptr) { return 0; }
 		return image[width*n + m];
