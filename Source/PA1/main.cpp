@@ -170,7 +170,7 @@ int main() {
 	// Problem 2
 	Image<float>* H1F = FastConvolve2D(image, H1Filter);
 	Image<byte>* P2 = new Image<byte>(image->M(), image->N(), [H1F, H1Filter](int m, int n) -> byte {
-		float h1 = H1F->Get(m + H1Filter->ConvTailM(), n + H1Filter->ConvTailN());
+		float h1 = H1F->Get(m + H1Filter->ConvTailM(), n + H1Filter->ConvTailN()); // Trim convolution tails by shifting
 		if (h1 > 255) { h1 = 255; }
 		if (h1 < 0) { h1 = 0; }
 		return (byte)h1;
@@ -185,8 +185,8 @@ int main() {
 	Image<float>* G1 = FastConvolve2D(image, S1Filter);
 	Image<float>* G2 = FastConvolve2D(image, S2Filter);
 	Image<byte>* P3 = new Image<byte>(image->M(), image->N(), [G1, G2, S1Filter, S2Filter](int m, int n) -> byte {
-		float g1 = G1->Get(m + S1Filter->ConvTailM(), n + S1Filter->ConvTailN());
-		float g2 = G2->Get(m + S2Filter->ConvTailM(), n + S2Filter->ConvTailN());
+		float g1 = G1->Get(m + S1Filter->ConvTailM(), n + S1Filter->ConvTailN()); // Trim convolution tails by shifting
+		float g2 = G2->Get(m + S2Filter->ConvTailM(), n + S2Filter->ConvTailN()); // Trim convolution tails by shifting
 		g1 = g1 < 0 ? g1 * -1 : g1;
 		g2 = g2 < 0 ? g2 * -1 : g2;
 		float sum = g1 + g2;
@@ -228,7 +228,7 @@ int main() {
 	});
 
 	Image<byte>* P4 = new Image<byte>(image->M(), image->N(), [F1, filter](int m, int n) -> byte {
-		float f1 = F1->Get(m + filter->ConvTailM(), n + filter->ConvTailN());
+		float f1 = F1->Get(m + filter->ConvTailM(), n + filter->ConvTailN()); // Trim convolution tails by shifting
 		if (f1 > 255) { f1 = 255; }
 		if (f1 < 0) { f1 = 0; }
 		return (byte)f1;
