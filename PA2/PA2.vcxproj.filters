@@ -2,20 +2,21 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Shared">
-      <UniqueIdentifier>{a051858a-3893-4198-9368-1b4dc8c2f43c}</UniqueIdentifier>
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Source\Shared\image.hpp">
-      <Filter>Shared</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\Shared\types.h">
-      <Filter>Shared</Filter>
-    </ClInclude>
     <ClInclude Include="..\Source\Shared\conv.hpp">
       <Filter>Shared</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Shared\image.hpp">
+      <Filter>Shared</Filter>
+    </ClInclude>
     <ClInclude Include="..\Source\Shared\signal.hpp">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Shared\types.h">
       <Filter>Shared</Filter>
     </ClInclude>
   </ItemGroup>
@@ -23,9 +24,9 @@
     <ClCompile Include="..\Source\Shared\image.cpp">
       <Filter>Shared</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\PA1\main.cpp" />
     <ClCompile Include="..\Source\Shared\signal.cpp">
       <Filter>Shared</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\PA2\main.cpp" />
   </ItemGroup>
 </Project>

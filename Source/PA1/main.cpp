@@ -1,5 +1,5 @@
 #include <iostream>
-#include <thread>
+#include "conv.hpp"
 #include "image.hpp"
 
 float H1[] = {
@@ -63,75 +63,7 @@ Image<float>* O1Convolve2D(Image<T1>* image, Image<T2>* filter) {
 	return output;
 }
 
-// Struct helper for Multithreading in Optimization 2
-template<typename T1, typename T2>
-class Plan {
-public:
-	Image<T1>* I;
-	Image<T2>* F;
-	int MI, NI;
-	int MF, NF;
-	int M, N;
-	Image<float>* out;
-
-	Plan(Image<T1>* image, Image<T2>* filter) {
-		I = image; F = filter;
-
-		MI = I->M();
-		NI = I->N();
-
-		MF = F->M();
-		NF = F->N();
-
-		M = MI + MF - 1;
-		N = NI + NF - 1;
-
-		out = new Image<float>(M, N);
-	}
-};
-
-// Thread routine for Multithreading in Opimization 2 (compare loop with O1Convolve2D)
-template<typename T1, typename T2>
-void FastConvolve2DThread(Plan<T1, T2>* plan, int n0, int n1) {
-	if (n1 > plan->N) { n1 = plan->N; }
-	for (int n = n0; n < n1; ++n) {
-		for (int m = 0; m < plan->M; ++m) {
-			float sum = 0;
-			for (int k = 0; k <= n && k < plan->NF; ++k) {
-				for (int l = 0; l <= m && l < plan->MF; ++l) {
-					sum += (float)plan->F->Get(l, k) * plan->I->Get(m - l, n - k);
-				}
-			}
-			plan->out->Set(m, n, sum);
-		}
-	}
-}
-
-// The number of threads to use in optimization 2 (divided roughly equally, the last one may be slightly less workload)
-#define POOL_SIZE 10
-
-// Optimization 2 - Multithreaded computation
-template<typename T1, typename T2>
-Image<float>* FastConvolve2D(Image<T1>* image, Image<T2>* filter) {
-	Plan<T1, T2> plan(image, filter);
-
-	std::thread* pool[POOL_SIZE];
-	int dn = plan.N / 10 + 1;
-
-	for (int i = 0; i < POOL_SIZE; ++i) {
-		int n0 = i * dn;
-		int n1 = n0 + dn;
-		pool[i] = new std::thread(FastConvolve2DThread<T1, T2>, &plan, n0, n1);
-	}
-
-	for (int i = 0; i < POOL_SIZE; ++i) {
-		pool[i]->join();
-		delete pool[i];
-		pool[i] = nullptr;
-	}
-
-	return plan.out;
-}
+// Optimization 2 - Multithreading (see conv.hpp)
 
 int main() {
 	int err;
@@ -168,7 +100,7 @@ int main() {
 	//}
 
 	// Problem 2
-	Image<float>* H1F = FastConvolve2D(image, H1Filter);
+	Image<float>* H1F = Conv2D(image, H1Filter);
 	Image<byte>* P2 = new Image<byte>(image->M(), image->N(), [H1F, H1Filter](int m, int n) -> byte {
 		float h1 = H1F->Get(m + H1Filter->ConvTailM(), n + H1Filter->ConvTailN()); // Trim convolution tails by shifting
 		if (h1 > 255) { h1 = 255; }
@@ -182,8 +114,8 @@ int main() {
 	}
 
 	// Problem 3
-	Image<float>* G1 = FastConvolve2D(image, S1Filter);
-	Image<float>* G2 = FastConvolve2D(image, S2Filter);
+	Image<float>* G1 = Conv2D(image, S1Filter);
+	Image<float>* G2 = Conv2D(image, S2Filter);
 	Image<byte>* P3 = new Image<byte>(image->M(), image->N(), [G1, G2, S1Filter, S2Filter](int m, int n) -> byte {
 		float g1 = G1->Get(m + S1Filter->ConvTailM(), n + S1Filter->ConvTailN()); // Trim convolution tails by shifting
 		float g2 = G2->Get(m + S2Filter->ConvTailM(), n + S2Filter->ConvTailN()); // Trim convolution tails by shifting
@@ -212,7 +144,7 @@ int main() {
 	//	return v - minScalar;
 	//});
 
-	Image<float>* F1 = FastConvolve2D(image, filter);
+	Image<float>* F1 = Conv2D(image, filter);
 
 	// Scale the filtered image so the maximum value in the image is 255
 	// and all negative values after scaling are set to zero (done in ctor() of P4)

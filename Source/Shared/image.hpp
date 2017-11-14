@@ -92,7 +92,6 @@ public:
 		height = h;
 		length = width * height;
 		image = new T[length];
-		//memcpy_s(image, sizeof(T) * length, img, sizeof(T) * length);
 		memcpy(image, img, sizeof(T) * length);
 	}
 	Image<T>& operator=(const Image<T>& rhs) { clean(); copy(rhs); return *this; }
