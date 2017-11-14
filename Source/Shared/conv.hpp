@@ -1,8 +1,9 @@
 #pragma once
 #include <thread>
 #include "image.hpp"
+#include "signal.hpp"
 
-// Struct helper for Multithreading in Optimization 2
+// Struct helper for Conv2D
 template<typename T1, typename T2>
 class Conv2DPlan {
 public:
@@ -73,3 +74,22 @@ Image<float>* Conv2D(Image<T1>* image, Image<T2>* filter) {
 
 // Don't clutter up the pre-processor defintions, we're done with it
 #undef CONV_POOL_SIZE
+
+template<typename T1, typename T2>
+Image<float>* Conv(Signal<T1>* signal, Signal<T2>* filter) {
+	int NI = S->N();
+	int NF = F->N();
+	int N = NI + NF - 1;
+	Signal<float>* out = new Signal<float>(N);
+
+	for (int n = 0; n < N; ++n) {
+		float sum = 0;
+		for (int k = 0; k <= n && k < NF; ++k) {
+			sum += (float)filter->Get(k) * signal->Get(n - k);
+		}
+		plan->out->Set(n, sum);
+	}
+
+	return out;
+}
+
