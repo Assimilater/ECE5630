@@ -19,6 +19,7 @@
     <ClInclude Include="..\Source\Shared\types.h">
       <Filter>Shared</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\PA2\PolyFilter.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Shared\image.cpp">
@@ -28,5 +29,6 @@
       <Filter>Shared</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\PA2\main.cpp" />
+    <ClCompile Include="..\Source\PA2\PolyFilter.cpp" />
   </ItemGroup>
 </Project>

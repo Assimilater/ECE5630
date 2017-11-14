@@ -92,4 +92,3 @@ Image<float>* Conv(Signal<T1>* signal, Signal<T2>* filter) {
 
 	return out;
 }
-

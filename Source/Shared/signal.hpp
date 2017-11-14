@@ -27,8 +27,8 @@ protected:
 	}
 
 public:
-	friend int OpenWAV(std::string, Signal<byte>**);
-	friend int SaveWAV(std::string, Signal<byte>*);
+	friend int OpenBin(std::string, Signal<float>**);
+	friend int SaveBin(std::string, Signal<float>*);
 
 	typedef std::function<void(int, T)> accessor;
 	typedef std::function<T(int, T)> mutator;
@@ -85,9 +85,9 @@ public:
 	}
 };
 
-#define ERROR_PGM_FILE          (1 << 0)
+#define ERROR_BIN_FILE          (1 << 0)
 #define ERROR_PGM_HEADER        (1 << 1)
 #define ERROR_PGM_MAXSIZE       (1 << 2)
 
-int OpenWAV(std::string, Signal<byte>**);
-int SaveWAV(std::string, Signal<byte>*);
+int OpenBin(std::string, Signal<float>**);
+int SaveBin(std::string, Signal<float>*);

@@ -115,6 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Source\PA2\PolyFilter.hpp" />
     <ClInclude Include="..\Source\Shared\conv.hpp" />
     <ClInclude Include="..\Source\Shared\image.hpp" />
     <ClInclude Include="..\Source\Shared\signal.hpp" />
@@ -122,6 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\PA2\main.cpp" />
+    <ClCompile Include="..\Source\PA2\PolyFilter.cpp" />
     <ClCompile Include="..\Source\Shared\image.cpp" />
     <ClCompile Include="..\Source\Shared\signal.cpp" />
   </ItemGroup>

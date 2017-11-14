@@ -128,10 +128,10 @@ int OpenPGM(std::string file, Image<byte>** out) {
 	return 0;
 }
 
-int SavePGM(std::string file, Image<byte>* in) {
+int SavePGM(std::string file, Image<byte>* out) {
 	std::fstream fout(file, std::ios::binary | std::ios::out);
-	fout << "P5\n" << in->width << ' ' << in->height << " 255\n";
-	fout.write((char*)in->image, in->length);
+	fout << "P5\n" << out->width << ' ' << out->height << " 255\n";
+	fout.write((char*)out->image, out->length);
 	fout.close();
 	return 0;
 }
