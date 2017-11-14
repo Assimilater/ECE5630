@@ -42,6 +42,8 @@ public:
 		delete[] F;
 	}
 
+	void feed(float xn);
+
 	PolyFilter(const PolyFilter& rhs) = delete;
 	PolyFilter& operator=(PolyFilter const& rhs) = delete;
 

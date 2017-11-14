@@ -6,7 +6,7 @@ function [x, Fs] = audio2bin(fin, fout)
     
     % Path correction
     fin = [pwd,'\',fin];
-    fout = [pwd,'\output\',fout];
+    fout = [pwd,'\',fout];
     fprintf('Input file = %s\n', fin);
     fprintf('Output file = %s\n', fout);
     
@@ -22,7 +22,7 @@ function [x, Fs] = audio2bin(fin, fout)
     % nchan = channels
     % nsamp = samples
     % sfreq = Fs
-    fwrite(fid, [channels, samples, Fs], 'int');
+    fwrite(fid, samples, 'int');
     
     % Arrange channels by row so the (:) will coalesce correctly
     
