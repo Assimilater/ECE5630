@@ -69,15 +69,3 @@ fclose(fid);
 fid = fopen('polc4.bin');
 c4pol = fread(fid, 'float');
 fclose(fid);
-
-fid = fopen('digc16.bin');
-c16dig = fread(fid, 'float');
-fclose(fid);
-
-fid = fopen('digc8.bin');
-c8dig = fread(fid, 'float');
-fclose(fid);
-
-fid = fopen('digc4.bin');
-c4dig = fread(fid, 'float');
-fclose(fid);

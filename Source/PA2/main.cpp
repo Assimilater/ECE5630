@@ -155,7 +155,7 @@ int main() {
 	int err;
 	Signal<float>* h = nullptr;
 
-	err = OpenBin("lpf_scaled.bin", &h);
+	err = OpenBin("lpf_wide.bin", &h);
 	if (err != 0) {
 		return err;
 	}
@@ -164,30 +164,85 @@ int main() {
 		return -1;
 	}
 
+	int N;
+	float* x;
+
+	// Ghostbusters
 	std::ifstream fin("ghostbustersray.bin", std::ios::binary | std::ios::in);
+	fin.read((char*)&N, sizeof(int));
+	x = new float[N];
+	fin.read((char*)x, sizeof(float) * N);
+	fin.close();
+
 	std::ofstream fDigOut("digInterp.bin", std::ios::binary | std::ios::out);
 	std::ofstream fPolOut("polInterp.bin", std::ios::binary | std::ios::out);
-
 	DigiResampler DigInterp(INTERP_UP, INTERP_DOWN, h, &fDigOut);
 	PolyResampler PolInterp(INTERP_UP, INTERP_DOWN, h, &fPolOut);
-
-	int N = 0;
-	fin.read((char*)&N, sizeof(int));
-	float* x = new float[N];
-	fin.read((char*)x, sizeof(float) * N);
-
-	int L = (N * INTERP_UP) / INTERP_DOWN;
-	//fDigOut.write((char*)&L, sizeof(int));
-	//fPolOut.write((char*)&L, sizeof(int));
 
 	for (int i = 0; i < N; ++i) {
 		DigInterp.feed(x[i]);
 		PolInterp.feed(x[i]);
 	}
-
-	fin.close();
 	fDigOut.close();
-	//fPolOut.close();
+	fPolOut.close();
+	delete x;
+
+	// 1/16 freq cosine
+	fin.open("c16.bin", std::ios::binary | std::ios::in);
+	fin.read((char*)&N, sizeof(int));
+	x = new float[N];
+	fin.read((char*)x, sizeof(float) * N);
+	fin.close();
+
+	fDigOut.open("digc16.bin", std::ios::binary | std::ios::out);
+	fPolOut.open("polc16.bin", std::ios::binary | std::ios::out);
+	DigiResampler DigC16(INTERP_UP, INTERP_DOWN, h, &fDigOut);
+	PolyResampler PolC16(INTERP_UP, INTERP_DOWN, h, &fPolOut);
+	for (int i = 0; i < N; ++i) {
+		DigC16.feed(x[i]);
+		PolC16.feed(x[i]);
+	}
+	fDigOut.close();
+	fPolOut.close();
+	delete x;
+
+	// 1/8 freq cosine
+	fin.open("c8.bin", std::ios::binary | std::ios::in);
+	fin.read((char*)&N, sizeof(int));
+	x = new float[N];
+	fin.read((char*)x, sizeof(float) * N);
+	fin.close();
+
+	fDigOut.open("digc8.bin", std::ios::binary | std::ios::out);
+	fPolOut.open("polc8.bin", std::ios::binary | std::ios::out);
+	DigiResampler DigC8(INTERP_UP, INTERP_DOWN, h, &fDigOut);
+	PolyResampler PolC8(INTERP_UP, INTERP_DOWN, h, &fPolOut);
+	for (int i = 0; i < N; ++i) {
+		DigC8.feed(x[i]);
+		PolC8.feed(x[i]);
+	}
+	fDigOut.close();
+	fPolOut.close();
+	delete x;
+
+	// 1/4 freq cosine
+	fin.open("c4.bin", std::ios::binary | std::ios::in);
+	fin.read((char*)&N, sizeof(int));
+	x = new float[N];
+	fin.read((char*)x, sizeof(float) * N);
+	fin.close();
+
+	fDigOut.open("digc4.bin", std::ios::binary | std::ios::out);
+	fPolOut.open("polc4.bin", std::ios::binary | std::ios::out);
+	DigiResampler DigC4(INTERP_UP, INTERP_DOWN, h, &fDigOut);
+	PolyResampler PolC4(INTERP_UP, INTERP_DOWN, h, &fPolOut);
+	for (int i = 0; i < N; ++i) {
+		DigC4.feed(x[i]);
+		PolC4.feed(x[i]);
+	}
+	fDigOut.close();
+	fPolOut.close();
+	delete x;
 
 	delete h;
 	return 0;
