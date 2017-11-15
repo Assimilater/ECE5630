@@ -155,7 +155,7 @@ int main() {
 	int err;
 	Signal<float>* h = nullptr;
 
-	err = OpenBin("lpf_wide.bin", &h);
+	err = OpenBin("lpf_scaled.bin", &h);
 	if (err != 0) {
 		return err;
 	}
