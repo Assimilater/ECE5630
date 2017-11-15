@@ -1,10 +1,8 @@
 #include <iostream>
 #include <fstream>
-#include "conv.hpp"
 #include "signal.hpp"
-#include "PolyFilter.hpp"
 
-class Resampler {
+class DigiResampler {
 private:
 	int U, D, N;
 	Signal<float>* h;
@@ -15,7 +13,7 @@ private:
 	int buff_i, y_i;
 
 public:
-	Resampler(int up, int down, Signal<float>* filter, std::ofstream* file) {
+	DigiResampler(int up, int down, Signal<float>* filter, std::ofstream* file) {
 		U = up;
 		D = down;
 		h = filter;
@@ -24,12 +22,12 @@ public:
 		buff_i = y_i = 0;
 		fout = file;
 	}
-	~Resampler() {
+	~DigiResampler() {
 		delete[] buff;
 	}
 
-	Resampler(const Resampler& rhs) = delete;
-	Resampler& operator=(Resampler const& rhs) = delete;
+	DigiResampler(const DigiResampler& rhs) = delete;
+	DigiResampler& operator=(DigiResampler const& rhs) = delete;
 
 	void feed(float xn) {
 		// Convolve xn
@@ -59,9 +57,99 @@ public:
 	}
 };
 
+class PolyResampler {
+private:
+	struct PolyFilter {
+		float* Filter;
+		float* Buffer;
+	};
+	PolyFilter* R;
+	int U, D, Rn;
+	int Ri;
+
+	std::ofstream* fout;
+
+	inline PolyFilter* GetFilter(int u, int d) {
+		if (u < 0 || d < 0 || u < U || d < D) {
+			return nullptr;
+		}
+		return &R[u*D + d];
+	}
+
+	PolyResampler(const PolyResampler& rhs) = delete;
+	PolyResampler& operator=(PolyResampler const& rhs) = delete;
+
+public:
+	~PolyResampler() {
+		for (int u = 0; u < U; ++u) {
+			for (int d = 0; d < D; ++d) {
+				PolyFilter* Rud = &R[u*D + d];
+				delete[] Rud->Buffer;
+				delete[] Rud->Filter;
+			}
+		}
+		delete[] R;
+	}
+
+	// In this case, I believe (naive approach) it will be more cache efficient to have each Rud filter be contiguous
+	PolyResampler(int up, int down, Signal<float>* filter, std::ofstream* file) {
+		fout = file;
+		U = up;
+		D = down;
+		Rn = filter->N() / 6;
+		R = new PolyFilter[U * D];
+		for (int u = 0; u < U; ++u) {
+			for (int d = 0; d < D; ++d) {
+				PolyFilter* Rud = &R[u*D + d];
+				Rud->Buffer = new float[Rn]();
+				Rud->Filter = new float[Rn];
+
+				// Generate the smaller filters
+				for (int n = 0; n < Rn; ++n) {
+					Rud->Filter[n] = filter->Get((n * U * D) + (u * D) + d);
+				}
+			}
+		}
+		Ri = 0;
+	}
+
+	void feed(float xn) {
+		int d = Ri % D;
+
+		// Feed xn to all R-filters at the d-offset
+		for (int u = 0; u < U; ++u) {
+			PolyFilter* Rud = &R[u*D + d];
+
+			// Convolve xn
+			for (int n = 0; n < Rn; ++n) {
+				Rud->Buffer[(Ri + n) % Rn] += xn * Rud->Filter[n];
+			}
+		}
+
+		int nextRi = (Ri + 1) % Rn;
+		d = nextRi % D;
+
+		// After x[0], x[1], ..., x[D] has been feed through
+		if (d == 0) {
+			// Output y[0], y[1], ..., y[U]
+			for (int u = 0; u < U; ++u) {
+				float Run = 0;
+				for (int d = 0; d < D; ++d) {
+					PolyFilter* Rud = &R[u*D + d];
+					Run += Rud->Buffer[Ri];
+					Rud->Buffer[Ri] = 0;
+				}
+				fout->write((char*)(&Run), sizeof(float));
+			}
+		}
+
+		Ri = nextRi;
+	}
+
+};
+
 #define INTERP_UP       3
 #define INTERP_DOWN     2
-#define BUFFER_SIZE     1024
 
 int main() {
 	int err;
@@ -78,10 +166,10 @@ int main() {
 
 	std::ifstream fin("ghostbustersray.bin", std::ios::binary | std::ios::in);
 	std::ofstream fDigOut("digInterp.bin", std::ios::binary | std::ios::out);
-	//std::ofstream fPolOut("polInterp.bin", std::ios::binary | std::ios::out);
+	std::ofstream fPolOut("polInterp.bin", std::ios::binary | std::ios::out);
 
-	Resampler  DigInterp(INTERP_UP, INTERP_DOWN, h, &fDigOut);
-	//PolyFilter PolInterp(INTERP_UP, INTERP_DOWN, h);
+	DigiResampler DigInterp(INTERP_UP, INTERP_DOWN, h, &fDigOut);
+	PolyResampler PolInterp(INTERP_UP, INTERP_DOWN, h, &fPolOut);
 
 	int N = 0;
 	fin.read((char*)&N, sizeof(int));
@@ -94,6 +182,7 @@ int main() {
 
 	for (int i = 0; i < N; ++i) {
 		DigInterp.feed(x[i]);
+		PolInterp.feed(x[i]);
 	}
 
 	fin.close();
